@@ -93,3 +93,50 @@ export async function loginAction(formData){
         }
     }
 }
+export async function fetchAuthUser(){
+    await connectToDB();
+    try {
+        const getCookies = cookies();
+        const token = getCookies.get("token")?.value || "";
+        if(token == ""){
+            return {
+                success: false,
+                message: "User Not Authenticated",
+            }
+        }
+        else{
+            const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
+            if(decodedToken){
+                const getUserInfo = await User.findOne({_id:decodedToken.id});
+                if(getUserInfo){
+                    return {
+                        success: true,
+                        message: "User Authenticated",
+                        data: JSON.parse(JSON.stringify(getUserInfo)),
+                    }
+                }
+                else{
+                    return {
+                        success: false,
+                        message: "User Not Found",
+                    }
+                }
+            }
+            else{
+                return {
+                    success: false,
+                    message: "No Info Found",
+                }
+            }
+        }
+    } catch (error) {
+        return {
+            success:false,
+            message:"Something went Wrong",
+        }
+    }
+}
+export async function logOut(){
+    const getCookies = cookies();
+    getCookies.set("token","");
+}
